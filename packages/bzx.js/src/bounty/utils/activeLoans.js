@@ -20,7 +20,7 @@ const getOrderObjArray = OrderHistoryUtils.makeGetOrderObjArray(
 );
 
 export const cleanData = raw =>
-  raw
+  raw && raw !== "0x"
     ? pipe(
         OrderHistoryUtils.remove0xPrefix,
         checkProperObjCount,

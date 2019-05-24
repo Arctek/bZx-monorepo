@@ -1,26 +1,26 @@
 exports.loanOrderSchema = {
   id: "/loanOrder",
   properties: {
-    bZxAddress: { $ref: "/Address" },
-    makerAddress: { $ref: "/Address" },
-    takerAddress: { $ref: "/Address" },
-    loanTokenAddress: { $ref: "/Address" },
-    interestTokenAddress: { $ref: "/Address" },
-    collateralTokenAddress: { $ref: "/Address" },
-    feeRecipientAddress: { $ref: "/Address" },
-    tradeTokenToFillAddress: { $ref: "/Address" },
-    oracleAddress: { $ref: "/Address" },
-    loanTokenAmount: { $ref: "/Number" },
-    interestAmount: { $ref: "/Number" },
-    initialMarginAmount: { $ref: "/Number" },
-    maintenanceMarginAmount: { $ref: "/Number" },
-    lenderRelayFee: { $ref: "/Number" },
-    traderRelayFee: { $ref: "/Number" },
-    maxDurationUnixTimestampSec: { $ref: "/Number" },
-    expirationUnixTimestampSec: { $ref: "/Number" },
-    makerRole: { $ref: "/Number" },
-    withdrawOnOpen: { $ref: "/Number" },
-    salt: { $ref: "/Number" }
+    bZxAddress: { $ref: "/addressSchema" },
+    makerAddress: { $ref: "/addressSchema" },
+    takerAddress: { $ref: "/addressSchema" },
+    loanTokenAddress: { $ref: "/addressSchema" },
+    interestTokenAddress: { $ref: "/addressSchema" },
+    collateralTokenAddress: { $ref: "/addressSchema" },
+    feeRecipientAddress: { $ref: "/addressSchema" },
+    tradeTokenToFillAddress: { $ref: "/addressSchema" },
+    oracleAddress: { $ref: "/addressSchema" },
+    loanTokenAmount: { $ref: "/numberSchema" },
+    interestAmount: { $ref: "/numberSchema" },
+    initialMarginAmount: { $ref: "/numberSchema" },
+    maintenanceMarginAmount: { $ref: "/numberSchema" },
+    lenderRelayFee: { $ref: "/numberSchema" },
+    traderRelayFee: { $ref: "/numberSchema" },
+    maxDurationUnixTimestampSec: { $ref: "/numberSchema" },
+    expirationUnixTimestampSec: { $ref: "/numberSchema" },
+    makerRole: { $ref: "/numberSchema" },
+    withdrawOnOpen: { $ref: "/numberSchema" },
+    salt: { $ref: "/numberSchema" }
   },
   required: [
     "bZxAddress",
@@ -52,7 +52,7 @@ exports.signedLoanOrderSchema = {
     { $ref: "/loanOrder" },
     {
       properties: {
-        ecSignature: { $ref: "/ECSignature" }
+        ecSignature: { $ref: "/hexSchema" }
       },
       required: ["ecSignature"]
     }

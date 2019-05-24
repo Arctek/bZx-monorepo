@@ -1,5 +1,5 @@
-import { assert } from "@0xproject/assert";
-import { BigNumber } from "@0xproject/utils";
+import { assert } from "@0x/assert";
+import { BigNumber } from "@0x/utils";
 import * as CoreUtils from "../core/utils";
 import { local as Contracts } from "../contracts";
 import * as Addresses from "../addresses";

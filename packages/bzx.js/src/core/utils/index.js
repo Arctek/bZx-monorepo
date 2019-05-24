@@ -1,7 +1,7 @@
-import { BigNumber } from "@0xproject/utils";
-import { assert } from "@0xproject/assert";
+import { BigNumber } from "@0x/utils";
+import { assert } from "@0x/assert";
 import BN from "bn.js";
-import Web3Utils from "web3-utils";
+import * as Web3Utils from "web3-utils";
 import * as constants from "../constants";
 import { SchemaValidator } from "../../schemas/bZx_json_schemas";
 import { getContracts } from "../../contracts";
@@ -21,7 +21,7 @@ export const generatePseudoRandomSalt = () => {
   const factor = new BigNumber(10).pow(
     constants.MAX_DIGITS_IN_UNSIGNED_256_INT - 1
   );
-  const salt = randomNumber.times(factor).round();
+  const salt = randomNumber.times(factor).integerValue(BigNumber.ROUND_CEIL);
   return salt;
 };
 

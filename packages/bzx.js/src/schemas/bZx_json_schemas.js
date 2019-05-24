@@ -4,15 +4,20 @@ const _ = require("lodash");
 
 exports.ValidatorResult = jsonschema_1.ValidatorResult;
 
-const basic_type_schemas_1 = require("@0xproject/json-schemas/lib/schemas/basic_type_schemas.js");
-const ec_signature_schema_1 = require("@0xproject/json-schemas/lib/schemas/ec_signature_schema.js");
+const number_schema_1 = require("@0x/json-schemas/lib/schemas/number_schema.json");
+const address_schema_1 = require("@0x/json-schemas/lib/schemas/address_schema.json");
+const ec_signature_schema_1 = require("@0x/json-schemas/lib/schemas/ec_signature_schema.json");
+const ec_signature_parameter_schema_1 = require("@0x/json-schemas/lib/schemas/ec_signature_parameter_schema.json");
+const hex_schema_1 = require("@0x/json-schemas/lib/schemas/hex_schema.json");
+
 const order_schemas_1 = require("./bZx_order_schemas.js");
 
 exports.schemas = {
-  numberSchema: basic_type_schemas_1.numberSchema,
-  addressSchema: basic_type_schemas_1.addressSchema,
-  ecSignatureSchema: ec_signature_schema_1.ecSignatureSchema,
-  ecSignatureParameterSchema: ec_signature_schema_1.ecSignatureParameterSchema,
+  numberSchema: number_schema_1,
+  addressSchema: address_schema_1,
+  ecSignatureSchema: ec_signature_schema_1,
+  ecSignatureParameterSchema: ec_signature_parameter_schema_1,
+  hexSchema: hex_schema_1,
   loanOrderSchema: order_schemas_1.loanOrderSchema,
   signedLoanOrderSchema: order_schemas_1.signedLoanOrderSchema
 };

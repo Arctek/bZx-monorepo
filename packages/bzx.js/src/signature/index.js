@@ -1,6 +1,6 @@
 import sigUtil from "eth-sig-util";
 import * as ethUtil from "ethereumjs-util";
-import { assert } from "@0xproject/assert";
+import { assert } from "@0x/assert";
 import _ from "lodash";
 import * as signatureUtils from "./utils";
 import * as CoreUtils from "../core/utils";

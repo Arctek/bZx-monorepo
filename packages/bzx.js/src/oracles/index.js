@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { map, mapAccum, pipe, zipWith } from "ramda";
-import { assert } from "@0xproject/assert";
+import { assert } from "@0x/assert";
 import * as utils from "../core/utils";
 import { getContracts/* , oracleList */ } from "../contracts";
 import * as Addresses from "../addresses";

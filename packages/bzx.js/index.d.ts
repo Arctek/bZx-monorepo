@@ -1,7 +1,7 @@
-import { BigNumber } from "@0xproject/utils";
+import { BigNumber } from "@0x/utils";
 import { TransactionObject, Tx } from "web3/eth/types";
-import { TransactionReceipt } from "web3/types";
-import Web3 = require("web3");
+import { TransactionReceipt } from "web3-core";
+import Web3 from "web3";
 
 export declare interface ILoanOrderValuesBase {
   makerAddress: string;

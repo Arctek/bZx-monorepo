@@ -3,7 +3,7 @@ import Web3Utils from "web3-utils";
 import BN from "bn.js";
 import ethABI from "ethereumjs-abi";
 import ethUtil from "ethereumjs-util";
-import OrderUtils from "@0xproject/order-utils";
+import OrderUtils from "@0x/order-utils";
 
 import * as CoreUtils from "../core/utils";
 import { getContracts } from "../contracts";
@@ -37,7 +37,7 @@ export const tradePositionWith0x = (
   const bZxContract = CoreUtils.getContractInstance(
     web3,
     contracts.BZx.abi,
-    contracts.BZx.address
+    contracts.BZx.addresses[networkId]
   );
 
   const values = [
@@ -88,7 +88,7 @@ export const tradePositionWith0xV2 = (
   const bZxContract = CoreUtils.getContractInstance(
     web3,
     contracts.BZx.abi,
-    contracts.BZx.address
+    contracts.BZx.addresses[networkId]
   );
 
   const preppedOrders = [];
@@ -150,7 +150,7 @@ export const tradePositionWithOracle = (
   const bZxContract = CoreUtils.getContractInstance(
     web3,
     contracts.BZx.abi,
-    contracts.BZx.address
+    contracts.BZx.addresses[networkId]
   );
 
   const txObj = bZxContract.methods.tradePositionWithOracle(

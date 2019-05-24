@@ -49,7 +49,7 @@ const checkProperObjCount = Utils.makeCheckProperObjCount(NUM_ORDER_FIELDS);
 const getOrderObjArray = Utils.makeGetOrderObjArray(NUM_ORDER_FIELDS);
 
 export const cleanData = raw =>
-  raw
+  raw && raw !== "0x"
     ? pipe(
         Utils.remove0xPrefix,
         checkProperObjCount,
