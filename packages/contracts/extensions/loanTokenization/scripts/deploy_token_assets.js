@@ -21,9 +21,8 @@ const rimraf = require("rimraf");
 const web3utils = require("web3-utils");
 
 const TokenizedRegistry = artifacts.require("TokenizedRegistry");
-const ReferencePriceFeed = artifacts.require("ReferencePriceFeed");
 
-const EtherLoanTokenLogic = artifacts.require("EtherLoanTokenLogic"); // includes LoanTokenLogic
+const LoanTokenLogic = artifacts.require("LoanTokenLogic");
 const PositionTokenLogic = artifacts.require("PositionTokenLogic");
 
 module.exports = async function(callback) {
@@ -46,11 +45,8 @@ module.exports = async function(callback) {
   // process TokenizedRegistry
   await processArtifacts("TokenizedRegistry", TokenizedRegistry.address, TokenizedRegistry.abi);
 
-  // process ReferencePriceFeed
-  await processArtifacts("ReferencePriceFeed", ReferencePriceFeed.address, ReferencePriceFeed.abi);
-
   // process iToken
-  await processArtifacts("iToken", "", EtherLoanTokenLogic.abi);
+  await processArtifacts("iToken", "", LoanTokenLogic.abi);
 
   // process pToken
   await processArtifacts("pToken", "", PositionTokenLogic.abi);

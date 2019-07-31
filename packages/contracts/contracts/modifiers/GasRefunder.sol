@@ -17,10 +17,10 @@ contract GasRefunder {
     bool public throwOnGasRefundFail = false;
 
     event GasRefund(
-        address indexed payer, 
-        uint256 gasUsed, 
-        uint256 currentGasPrice, 
-        uint256 refundAmount, 
+        address indexed payer,
+        uint256 gasUsed,
+        uint256 currentGasPrice,
+        uint256 refundAmount,
         bool refundSuccess
     );
 
@@ -87,7 +87,7 @@ contract GasRefunder {
         if (percentMultiplier == 0) // 0 percentMultiplier not allowed
             percentMultiplier = 100 * 10**18;
 
-        finalGasUsed = gasUsed - gasleft();
+        finalGasUsed = gasUsed.sub(gasleft());
 
         refundAmount = finalGasUsed.mul(gasPrice).mul(percentMultiplier).div(10**20);
     }

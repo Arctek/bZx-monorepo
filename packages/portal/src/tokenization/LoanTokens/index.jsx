@@ -75,6 +75,7 @@ export default class LoanTokens extends BZxComponent {
     tokenBalance: 0,
     tokenContract: null,
     tokenContractSymbol: ``,
+    tokenContractDecimals: 0,
     borrowAmount: 0,
     buyAmount: 0,
     sellAmount: 0,
@@ -132,7 +133,13 @@ export default class LoanTokens extends BZxComponent {
       }
     }*/
 
-    let tokenizedRegistry = await this.props.bZx.getWeb3Contract(`TokenizedRegistry`);
+    let TokenizedRegistry_addr;
+    if (this.props.bZx.networkId === 1) {
+      TokenizedRegistry_addr = "0xd8dc30d298ccf40042991cb4b96a540d8affe73a";
+    } else if (this.props.bZx.networkId === 3) {
+      TokenizedRegistry_addr = "0xAA5C713387972841995553c9690459596336800b";
+    }
+    let tokenizedRegistry = await this.props.bZx.getWeb3Contract(`TokenizedRegistry`,TokenizedRegistry_addr);
     const tokenList = await this.wrapAndRun(tokenizedRegistry.methods.getTokens(0, 10, 1).call());
     console.log(`tokenList`,tokenList);
 
@@ -181,13 +188,13 @@ export default class LoanTokens extends BZxComponent {
 
       const supplyInterestRate = await this.wrapAndRun(tokenContract.methods.supplyInterestRate().call());
       const borrowInterestRate = await this.wrapAndRun(tokenContract.methods.borrowInterestRate().call());
-      const nextLoanInterestRate = await this.wrapAndRun(tokenContract.methods.nextLoanInterestRate("0").call());
+      const nextLoanInterestRate = await this.wrapAndRun(tokenContract.methods.nextLoanInterestRate("10000000000000000").call());
 
       const totalAssetBorrow = await this.wrapAndRun(tokenContract.methods.totalAssetBorrow().call());
       const totalAssetSupply = await this.wrapAndRun(tokenContract.methods.totalAssetSupply().call());
       const tokenPrice = await this.wrapAndRun(tokenContract.methods.tokenPrice().call());
 
-      const marketLiquidity = await this.wrapAndRun(tokenContract.methods.marketLiquidity().call());
+      const marketLiquidity = (await this.wrapAndRun(tokenContract.methods.marketLiquidity().call())).times(10**(18-this.state.tokenContractDecimals));
 
       const baseRateCurrent = toBigNumber(
         await this.wrapAndRun(tokenContract.methods.baseRate().call()),
@@ -254,6 +261,9 @@ export default class LoanTokens extends BZxComponent {
   
       const tokenContractSymbol = (await this.wrapAndRun(tokenContract.methods.symbol().call())).toString();
       console.log(`iToken contract symbol:`, tokenContractSymbol);
+
+      const tokenContractDecimals = await this.wrapAndRun(tokenContract.methods.decimals().call());
+      console.log(`iToken contract decimals:`, tokenContractDecimals);
   
       const leverageList = await this.wrapAndRun(tokenContract.methods.getLeverageList().call());
   
@@ -268,6 +278,7 @@ export default class LoanTokens extends BZxComponent {
       await this.setState({ 
         tokenContract,
         tokenContractSymbol,
+        tokenContractDecimals,
         loanTokenAddress,
         leverageHashes
       });
@@ -668,7 +679,7 @@ export default class LoanTokens extends BZxComponent {
       gasPrice: window.defaultGasPrice.toString()
     };
 
-    const bZxContract = await this.props.bZx.getWeb3Contract(`BZx`);
+    /*const bZxContract = await this.props.bZx.getWeb3Contract(`BZx`);
     const isApproved = await this.wrapAndRun(bZxContract.methods.allowedValidators(accounts[0], tokenContract._address).call());
     if (!isApproved) {
       alert(`Please submit an approval transaction in MetaMask. This is only required the first time you open a loan from this token. Once confirmed, you will be asked to submit the loan transaction.`);
@@ -676,7 +687,7 @@ export default class LoanTokens extends BZxComponent {
         tokenContract._address,
         true
       ).send(txOpts);
-    }
+    }*/
 
     const txObj = await tokenContract.methods.borrowToken(
       toBigNumber(borrowAmount, 1e18).toFixed(0),
@@ -972,7 +983,7 @@ export default class LoanTokens extends BZxComponent {
             </DataPointContainer>
 
             <DataPointContainer>
-              <Label>Next Borrow Interest Rate</Label>
+              <Label>Next Borrow Interest Rate (0.01)</Label>
               <DataPoint>
                 {toBigNumber(
                   nextLoanInterestRate,

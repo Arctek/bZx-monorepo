@@ -152,6 +152,14 @@ contract BZx is BZxStorage {
         bool isApproved)
         external;
 
+    /// @dev Toggles approval of a protocol deletate that can fill orders on behalf of another user when requested by that user
+    /// @param delegate The delegate address
+    /// @param isApproved If true, the delegate is approved. If false, the delegate is not approved
+    function toggleProtocolDelegateApproved(
+        address delegate,
+        bool isApproved)
+        external;
+
     /// @dev Cancels remaining (untaken) loan
     /// @param orderAddresses Array of order's makerAddress, loanTokenAddress, interestTokenAddress, collateralTokenAddress, feeRecipientAddress, oracleAddress, takerAddress, tradeTokenToFillAddress.
     /// @param orderValues Array of order's loanTokenAmount, interestAmount, initialMarginAmount, maintenanceMarginAmount, lenderRelayFee, traderRelayFee, maxDurationUnixTimestampSec, expirationUnixTimestampSec, makerRole (0=lender, 1=trader), withdrawOnOpen, and salt.
@@ -495,12 +503,14 @@ contract BZx is BZxStorage {
 
     /// @param loanOrderHash A unique hash representing the loan order
     /// @param trader The trader of the position
-    /// @return netCollateralAmount The amount of collateral escrowed netted to any exceess or deficit
+    /// @param actualized If true we get actual rate, false we get best rate
+    /// @return netCollateralAmount The amount of collateral escrowed netted to any exceess or deficit from gains and losses
     /// @return interestDepositRemaining The amount of deposited interest that is not yet owed to a lender
     /// @return loanTokenAmountBorrowed The amount of loan token borrowed for the position
     function getTotalEscrow(
         bytes32 loanOrderHash,
-        address trader)
+        address trader,
+        bool actualized)
         public
         view
         returns (
@@ -551,6 +561,17 @@ contract BZx is BZxStorage {
         external
         returns (uint256 actualCloseAmount);
 
+    /// @dev Called by the trader to close part of their loan early.
+    /// @dev Contract will revert if the position is unhealthy and the full position is not being closed.
+    /// @param loanOrderHash A unique hash representing the loan order
+    /// @param closeAmount The amount of the loan token to return to the lender
+    /// @return The actual amount closed. Greater than closeAmount means the loan needed liquidation.
+    function closeLoanPartiallyIfHealthy(
+        bytes32 loanOrderHash,
+        uint256 closeAmount)
+        external
+        returns (uint256 actualCloseAmount);
+
     /// @dev Called by the trader to close their loan early.
     /// @param loanOrderHash A unique hash representing the loan order
     /// @return True on success
@@ -566,7 +587,7 @@ contract BZx is BZxStorage {
     function forceCloseLoan(
         bytes32 loanOrderHash,
         address trader)
-        public
+        external
         returns (bool);
 
     /// @dev Checks the conditions for liquidation with the oracle

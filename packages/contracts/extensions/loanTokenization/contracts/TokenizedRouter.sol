@@ -1,9 +1,9 @@
 /**
- * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
+ * Copyright 2017-2019, bZeroX, LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0.
  */
  
-pragma solidity 0.5.7;
+pragma solidity 0.5.8;
 pragma experimental ABIEncoderV2;
 
 import "./shared/openzeppelin-solidity/SafeMath.sol";

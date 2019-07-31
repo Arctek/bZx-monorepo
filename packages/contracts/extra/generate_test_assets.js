@@ -40,14 +40,14 @@ function proceed() {
     TestNetPriceFeed: "unknown",
     ZeroExV2Helper: "unknown",
 
-    EtherLoanTokenLogic: "unknown",
+    LoanTokenLogic: "unknown",
     PositionTokenLogic: "unknown",
     TokenizedRegistry: "unknown",
   };
   var replacements = {};
 
   var loanTokenization = new Array(
-    "EtherLoanTokenLogic",
+    "LoanTokenLogic",
     "PositionTokenLogic",
     "TokenizedRegistry"
   );
@@ -156,7 +156,7 @@ function proceed() {
         }
         jsonContents["BZx"]["abi"] = jsonContent["abi"];
         return;
-      } else if (item == "EtherLoanTokenLogic") {
+      } else if (item == "LoanTokenLogic") {
         if (!jsonContents["LoanToken"]) {
           jsonContents["LoanToken"] = {};
         }

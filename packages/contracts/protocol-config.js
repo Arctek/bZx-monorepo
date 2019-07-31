@@ -27,12 +27,15 @@ module.exports = {
         ERC721Proxy: "0xe654aac058bfbf9f83fcaee7793311dd82f6ddb4",
         AssetProxyOwner: "0xf5fa5b5fed2727a0e44ac67f6772e97977aa358b"
       },
+      OracleNotifier: "0xe09011af509f72c46312ebabceabc7c5ea7e6991",
       KyberContractAddress: "0x818E6FECD516Ecc3849DAf6845e3EC868087B755", // "0x2a21728dF01992cCEE34ad8f9c32A0a2AE1e181b", // old: "0xD19559B3121c1b071481d8813d5dBcDC5869e2e8", // old: "0x0a56d8a49E71da8d7F9C65F95063dB48A3C9560B", // Ropsten (https://ropsten.kyber.network)
       BZRXToken: "0xf8b0b6ee32a617beca665b6c5b241ac15b1acdd5", //"0x6f47868CCa96DFfFb6dE50Be22ee11aAADd96EF9", //"0xa890bbffea779fd4ff9d28469cfc8f2d35bc620d", //"0x14823Db576c11e4a54Ca9E01Ca0b28b18D3d1187",
       BZRXTokenSale: "0x450e617b88366fde63c18880acbdeb35a5812eee",
       BZxEther: "0xa3eBDf66e0292F1d5FD82Ae3fcd92551Ac9dB081",
       MultiSig: "0x35b94649Bd03D13eF08e999127351Cc52286473C",
+      TokenizedRegistry: "0xaa5c713387972841995553c9690459596336800b",
       DAITokenAddress: "0xad6d458402f60fd3bd25163575031acdce07538d", // Kyber DAI
+      WBTCTokenAddress: "0x95cc8d8f29d0f7fcc425e8708893e759d1599c97" // Kyber ENG
     },
     kovan: {
       ZeroEx: {
@@ -85,13 +88,22 @@ module.exports = {
         ERC721Proxy: "0x208e41fb445f1bb1b6780d58356e81405f3e6127",
         AssetProxyOwner: "0x17992e4ffb22730138e4b62aaa6367fa9d3699a6"
       },
+      OracleNotifier: "0x6d20ea6fe6d67363684e22f1485712cfdccf177a",
       KyberContractAddress: "0x818e6fecd516ecc3849daf6845e3ec868087b755", // Mainnet (https://kyber.network/swap)
       KyberRegisterWallet: "0xECa04bB23612857650D727B8ed008f80952654ee",
       BZRXToken: "0x1c74cff0376fb4031cd7492cd6db2d66c3f2c6b9", //"0xe23d55af1646a65c1504f69e3d485c1d6da68e94", //"0x13939ac9F1e0F99872fA873B6E00DE9248ac95A0",
       BZRXTokenSale: "0x0b12cf7964731f7190b74600fcdad9ba4cac870c",
       BZxEther: "0x96CCe310096755f69594212d5D5fB5485577E7d1",
       MultiSig: "",
+      TokenizedRegistry: "0xd8dc30d298ccf40042991cb4b96a540d8affe73a",
       DAITokenAddress: "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359",
+      USDCTokenAddress: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      WBTCTokenAddress: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+      BATTokenAddress: "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+      KNCTokenAddress: "0xdd974d5c2e2928dea5f71b9825b8b646686bd200",
+      MKRTokenAddress: "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+      REPTokenAddress: "0x1985365e9f78359a9b6ad760e32412f4a445e862",
+      ZRXTokenAddress: "0xe41d2489571d322189246dafa5ebde1f4699f498"
     }
   }
 };

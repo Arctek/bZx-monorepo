@@ -54,7 +54,7 @@ const TOKENIZED_TABS = [
   { id: `tokenizedloans_loantokens`, label: `Loan Tokens` },
   { id: `tokenizedloans_positiontokens_short`, label: `Position Tokens (short)` },
   { id: `tokenizedloans_positiontokens_long`, label: `Position Tokens (long)` },
-  { id: `tokenizedloans_debug`, label: `Debug` }
+  { id: `tokenizedloans_debug`, label: `Advanced` }
 ];
 
 const getDomainData = () => {
@@ -139,7 +139,7 @@ switch (domainData.subdomain) {
         this.setState({ activeTokenizedTab: tabId, activeOrder: order });
     
       web3Received = (bZx) => {
-        this.setState({ bZx, getWeb3: false, web3IsReceived: true, activeCard: bZx.networkId === 50 ? `tokenizedloans` : `balances` });
+        this.setState({ bZx, getWeb3: false, web3IsReceived: true, activeCard: bZx.networkId === 50 || process.env.NODE_ENV !== `production` ? `tokenizedloans` : `balances` });
       }
     
       clearProvider = () => {
@@ -264,7 +264,7 @@ switch (domainData.subdomain) {
               <Fragment>
                 <HeaderTitle>
                   <HeaderTitleSiteName>bZx Portal</HeaderTitleSiteName>
-                  <HeaderTitleContext>Debug</HeaderTitleContext>
+                  <HeaderTitleContext>Advanced</HeaderTitleContext>
                 </HeaderTitle>
                 <HeaderData />
               </Fragment>

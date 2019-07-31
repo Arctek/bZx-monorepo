@@ -132,7 +132,7 @@ export default class LoanItem extends BZxComponent {
 
     const txOpts = {
       from: accounts[0],
-      gas: 2000000,
+      gas: 6000000,
       gasPrice: window.defaultGasPrice.toString()
     };
 
@@ -145,7 +145,7 @@ export default class LoanItem extends BZxComponent {
     const txObj = bZx.liquidateLoan({
       loanOrderHash,
       trader,
-      liquidateAmount: "000000000000000000",
+      liquidateAmount: "0", // full position
       getObject: true
     });
 
@@ -189,7 +189,7 @@ export default class LoanItem extends BZxComponent {
   };
 
   render() {
-    const { data, tokens, bZx, accounts } = this.props;
+    const { data, tokens, bZx, accounts, showAll } = this.props;
     const {
       loadingMargins,
       error,
@@ -203,7 +203,7 @@ export default class LoanItem extends BZxComponent {
     const dateStr = date.format(`MMMM Do YYYY, h:mm a UTC`);
     const isExpired = moment(moment().utc()).isAfter(date);
     return (
-      <Card>
+      <Card style={{ display: !showAll && !loadingMargins && !error && !isExpired && !isUnSafe ? `none` : `` }}>
         <CardContent>
           <DataPointContainer>
             <Label>Order # </Label>
@@ -289,15 +289,13 @@ export default class LoanItem extends BZxComponent {
           )}
 
           <DataPointContainer>
-            { process.env.NODE_ENV !== `production` ? (
             <Button
               style={{ marginTop: `12px`, marginRight: `12px` }}
               variant="raised"
               onClick={this.debugLoan}
             >
-              Debug
+              Advanced
             </Button>
-            ) : ``}
             
             <Button
               style={{ marginTop: `12px` }}

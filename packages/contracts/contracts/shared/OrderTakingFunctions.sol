@@ -369,7 +369,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             loanPosition.positionId
         );
 
-        if (loanPosition.collateralTokenAmountFilled > 0) {
+        /*if (loanPosition.collateralTokenAmountFilled > 0) {
             if (! OracleInterface(oracleAddresses[loanOrder.oracleAddress]).didTakeOrder(
                 loanOrder,
                 loanOrderAux,
@@ -379,7 +379,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             )) {
                 revert("OracleInterface.didTakeOrder failed");
             }
-        }
+        }*/
     }
 
     function _fillLoanOrder(
@@ -448,7 +448,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
         if (loanOrderAux.feeRecipientAddress != address(0)) {
             if (loanOrderAux.traderRelayFee > 0) {
                 if (! BZxVault(vaultContract).transferTokenFrom(
-                    bZRxTokenContract, 
+                    bZRxTokenContract,
                     trader,
                     loanOrderAux.feeRecipientAddress,
                     _safeGetPartialAmountFloor(loanTokenAmountFilled, loanOrder.loanTokenAmount, loanOrderAux.traderRelayFee)
@@ -458,7 +458,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             }
             if (loanOrderAux.lenderRelayFee > 0) {
                 if (! BZxVault(vaultContract).transferTokenFrom(
-                    bZRxTokenContract, 
+                    bZRxTokenContract,
                     lender,
                     loanOrderAux.feeRecipientAddress,
                     _safeGetPartialAmountFloor(loanTokenAmountFilled, loanOrder.loanTokenAmount, loanOrderAux.lenderRelayFee)
@@ -504,16 +504,18 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
                     // The trader has opened a position in a previous loan fill.
                     // We automatically add to that position
 
-                    uint256 balanceBeforeTrade = EIP20(loanOrder.loanTokenAddress).balanceOf(oracleAddresses[loanOrder.oracleAddress]);
+                    address oracle = oracleAddresses[loanOrder.oracleAddress];
+
+                    uint256 balanceBeforeTrade = EIP20(loanOrder.loanTokenAddress).balanceOf(oracle);
 
                     if (!BZxVault(vaultContract).withdrawToken(
                         loanOrder.loanTokenAddress,
-                        oracleAddresses[loanOrder.oracleAddress],
+                        oracle,
                         loanTokenAmountFilled)) {
                         revert("BZxVault.withdrawToken failed");
                     }
-                    
-                    (uint256 amountFilled,) = OracleInterface(oracleAddresses[loanOrder.oracleAddress]).trade(
+
+                    (uint256 amountFilled,) = OracleInterface(oracle).trade(
                         loanOrder.loanTokenAddress,
                         loanPosition.positionTokenAddressFilled,
                         loanTokenAmountFilled,
@@ -522,7 +524,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
 
                     // It is assumed that all of the loan token will be traded, so the remaining token balance of the oracle
                     // shouldn't be greater than the balance before we sent the token to be traded.
-                    if (balanceBeforeTrade < EIP20(loanOrder.loanTokenAddress).balanceOf(oracleAddresses[loanOrder.oracleAddress])) {
+                    if (balanceBeforeTrade < EIP20(loanOrder.loanTokenAddress).balanceOf(oracle)) {
                         revert("balanceBeforeTrade is less");
                     }
                 } else {
@@ -536,7 +538,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             loanPositions[positionId] = loanPosition;
         } else {
             // trader has not previously filled part of this loan or the previous fill is inactive
-            
+
             positionId = uint(keccak256(abi.encodePacked(
                 loanOrder.loanOrderHash,
                 orderPositionList[loanOrder.loanOrderHash].length,
@@ -582,7 +584,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
 
             loanPositionsIds[loanOrder.loanOrderHash][trader] = positionId;
         }
-        
+
         if (orderLender[loanOrder.loanOrderHash] == address(0)) {
             // set only once per order
             orderLender[loanOrder.loanOrderHash] = lender;
@@ -612,7 +614,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             // This trade has been filled previously.
             return 0;
         }
-        
+
         (uint256 tradeTokenAmount, uint256 positionTokenAmountUsed) = _tradePositionWithOracle(
             loanOrder,
             loanPosition,
@@ -658,10 +660,9 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             // update lender interest
             _payInterestForOrder(loanOrder, oracleInterest, lenderInterest, true);
 
-            uint256 owedPerDay = _safeGetPartialAmountFloor(
-                loanTokenAmountFilled,
-                loanOrder.loanTokenAmount,
-                loanOrder.interestAmount
+            uint256 owedPerDay = SafeMath.div(
+                SafeMath.mul(loanTokenAmountFilled, loanOrder.interestAmount),
+                loanOrder.loanTokenAmount
             );
 
             lenderInterest.interestOwedPerDay = lenderInterest.interestOwedPerDay.add(owedPerDay);
@@ -699,7 +700,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
                 )) {
                     revert("BZxVault.depositToken interest failed");
                 }
-                
+
                 tokenInterestOwed[orderLender[loanOrder.loanOrderHash]][loanOrder.interestTokenAddress] = tokenInterestOwed[orderLender[loanOrder.loanOrderHash]][loanOrder.interestTokenAddress].add(totalInterestToCollect);
             }
         }
