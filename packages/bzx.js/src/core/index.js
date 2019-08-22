@@ -65,6 +65,8 @@ export class BZxJS {
     signature.signOrderHashAsync(this, ...props);
 
   getOracleList = async () => oracles.getOracleList(this);
+  getConversionData = async (...props) =>
+    oracles.getConversionData(this, ...props);
 
   takeLoanOrderAsLender = (...props) =>
     fill.takeLoanOrderAsLender(this, ...props);
