@@ -10,7 +10,6 @@ import "../openzeppelin-solidity/SafeMath.sol";
 
 import "../storage/BZxStorage.sol";
 import "../BZxVault.sol";
-import "../oracle/OracleRegistry.sol";
 import "../oracle/OracleInterface.sol";
 import "./MiscFunctions.sol";
 
@@ -237,11 +236,11 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             revert("block.timestamp >= loanOrderAux.expirationUnixTimestampSec");
         }
 
-        if (loanOrder.maxDurationUnixTimestampSec == 0 || loanOrder.maxDurationUnixTimestampSec > block.timestamp + loanOrder.maxDurationUnixTimestampSec) {
-            revert("loanOrder.maxDurationUnixTimestampSec == 0 || loanOrder.maxDurationUnixTimestampSec causes overflow");
+        if (loanOrder.maxDurationUnixTimestampSec != 0 && loanOrder.maxDurationUnixTimestampSec > block.timestamp + loanOrder.maxDurationUnixTimestampSec) {
+            revert("maxDurationUnixTimestampSec causes overflow");
         }
 
-        if (! OracleRegistry(oracleRegistryContract).hasOracle(loanOrder.oracleAddress) || oracleAddresses[loanOrder.oracleAddress] == address(0)) {
+        if (oracleAddresses[loanOrder.oracleAddress] == address(0)) {
             revert("Oracle doesn't exist");
         }
 
@@ -287,8 +286,8 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             revert("block.timestamp >= loanOrderAux.expirationUnixTimestampSec");
         }
 
-        if (loanOrder.maxDurationUnixTimestampSec == 0 || loanOrder.maxDurationUnixTimestampSec > block.timestamp + loanOrder.maxDurationUnixTimestampSec) {
-            revert("loanOrder.maxDurationUnixTimestampSec == 0 || loanOrder.maxDurationUnixTimestampSec causes overflow");
+        if (loanOrder.maxDurationUnixTimestampSec != 0 && loanOrder.maxDurationUnixTimestampSec > block.timestamp + loanOrder.maxDurationUnixTimestampSec) {
+            revert("maxDurationUnixTimestampSec causes overflow");
         }
 
         uint256 remainingLoanTokenAmount = loanOrder.loanTokenAmount.sub(_getUnavailableLoanTokenAmount(loanOrder.loanOrderHash));
@@ -520,6 +519,8 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
                         loanPosition.positionTokenAddressFilled,
                         loanTokenAmountFilled,
                         MAX_UINT);
+                    require(amountFilled != 0 && amountFilled != MAX_UINT, "amountFilled == 0");
+
                     loanPosition.positionTokenAmountFilled = loanPosition.positionTokenAmountFilled.add(amountFilled);
 
                     // It is assumed that all of the loan token will be traded, so the remaining token balance of the oracle
@@ -679,7 +680,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
                 interestTime = loanPosition.loanEndUnixTimestampSec;
             }
 
-            if (traderInterest.interestUpdatedDate > 0 && traderInterest.interestOwedPerDay > 0) {
+            if (traderInterest.interestUpdatedDate != 0 && traderInterest.interestOwedPerDay != 0) {
                 traderInterest.interestPaid = interestTime
                     .sub(traderInterest.interestUpdatedDate)
                     .mul(traderInterest.interestOwedPerDay)
@@ -696,7 +697,7 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
             traderInterest.interestOwedPerDay = traderInterest.interestOwedPerDay.add(owedPerDay);
             traderInterest.interestDepositTotal = traderInterest.interestDepositTotal.add(totalInterestToCollect);
 
-            if (totalInterestToCollect > 0) {
+            if (totalInterestToCollect != 0) {
                 // deposit interest token
                 if (!BZxVault(vaultContract).depositToken(
                     loanOrder.interestTokenAddress,
@@ -705,6 +706,8 @@ contract OrderTakingFunctions is BZxStorage, MiscFunctions {
                 )) {
                     revert("BZxVault.depositToken interest failed");
                 }
+
+                tokenInterestOwed[orderLender[loanOrder.loanOrderHash]][loanOrder.interestTokenAddress] = tokenInterestOwed[orderLender[loanOrder.loanOrderHash]][loanOrder.interestTokenAddress].add(totalInterestToCollect);
             }
         }
     }

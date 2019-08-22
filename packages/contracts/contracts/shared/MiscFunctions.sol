@@ -27,12 +27,15 @@ contract MiscFunctions is BZxStorage, MathFunctions {
     {
         address oracleRef = oracleAddresses[oracleAddress];
 
-        uint256 interestOwedNow = 0;
+        uint256 interestOwedNow;
         if (oracleInterest.interestOwedPerDay > 0 && oracleInterest.interestPaidDate > 0 && interestTokenAddress != address(0)) {
             interestOwedNow = block.timestamp.sub(oracleInterest.interestPaidDate).mul(oracleInterest.interestOwedPerDay).div(86400);
+            if (interestOwedNow > tokenInterestOwed[lender][interestTokenAddress])
+                interestOwedNow = tokenInterestOwed[lender][interestTokenAddress];
 
-            if (interestOwedNow > 0) {
+            if (interestOwedNow != 0) {
                 oracleInterest.interestPaid = oracleInterest.interestPaid.add(interestOwedNow);
+                tokenInterestOwed[lender][interestTokenAddress] = tokenInterestOwed[lender][interestTokenAddress].sub(interestOwedNow);
 
                 if (sendToOracle) {
                     // send the interest to the oracle for further processing
@@ -140,39 +143,6 @@ contract MiscFunctions is BZxStorage, MathFunctions {
                 maxDestTokenAmount,
                 ensureHealthy
             );
-        }
-    }
-
-    function _tradeWithOracle(
-        address sourceTokenAddress,
-        address destTokenAddress,
-        address oracleAddress,
-        uint256 sourceTokenAmount,
-        uint256 maxDestTokenAmount)
-        internal
-        returns (uint256 destTokenAmountReceived, uint256 sourceTokenAmountUsed)
-    {
-        if (!BZxVault(vaultContract).withdrawToken(
-            sourceTokenAddress,
-            oracleAddress,
-            sourceTokenAmount
-        )) {
-            revert("oracletrade: withdrawToken (sourceToken) failed");
-        }
-
-        (destTokenAmountReceived, sourceTokenAmountUsed) = OracleInterface(oracleAddress).trade(
-            sourceTokenAddress,
-            destTokenAddress,
-            sourceTokenAmount,
-            maxDestTokenAmount
-        );
-
-        if (sourceTokenAmount < sourceTokenAmountUsed) {
-            revert("oracletrade: sourceTokenAmount < sourceTokenAmountUsed");
-        }
-
-        if (destTokenAmountReceived == 0 && sourceTokenAmountUsed > 0) {
-            revert("oracletrade: invalid trade");
         }
     }
 
