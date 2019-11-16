@@ -13,7 +13,7 @@ import "../BZxVault.sol";
 import "../oracle/OracleInterface.sol";
 
 
-contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
+contract iTokens_loanOpeningFunctions is BZxStorage, BZxProxiable {
     using SafeMath for uint256;
 
     constructor() public {}
@@ -29,25 +29,28 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
         public
         onlyOwner
     {
-        targets[bytes4(keccak256("takeOrderFromiToken(bytes32,address,address,address,uint256,uint256,uint256[5])"))] = _target;
+        targets[bytes4(keccak256("takeOrderFromiToken(bytes32,address[3],uint256[8],bytes)"))] = _target;
         targets[bytes4(keccak256("getRequiredCollateral(address,address,address,uint256,uint256)"))] = _target;
         targets[bytes4(keccak256("getBorrowAmount(address,address,address,uint256,uint256)"))] = _target;
     }
 
     // assumption: loan and interest are the same token
     function takeOrderFromiToken(
-        bytes32 loanOrderHash,          // existing loan order hash
-        address trader,                 // borrower/trader
-        address collateralTokenAddress, // collateral token
-        address tradeTokenAddress,      // trade token
-        uint256 newInterestRate,        // new loan interest rate
-        uint256 newLoanAmount,          // new loan size (principal from lender)
-        uint256[5] calldata sentAmounts)
+        bytes32 loanOrderHash, // existing loan order hash
+        address[3] calldata sentAddresses,
+            // trader: borrower/trader
+            // collateralTokenAddress: collateral token
+            // tradeTokenAddress: trade token
+        uint256[8] calldata sentAmounts,
+            // newInterestRate: new loan interest rate
+            // newLoanAmount: new loan size (principal from lender)
             // interestInitialAmount: interestAmount sent to determine initial loan length (this is included in one of the below)
             // loanTokenSent: loanTokenAmount + interestAmount + any extra
             // collateralTokenSent: collateralAmountRequired + any extra
             // tradeTokenSent: tradeTokenAmount (optional)
             // withdrawalAmount: Actual amount sent to borrower (can't exceed newLoanAmount)
+            // marginPremiumAmount: The additional percentage of collateral required for loan opening
+        bytes calldata loanData)
         external
         nonReentrant
         tracksGas
@@ -56,26 +59,30 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
         // only callable by iTokens
         require(allowedValidators[address(0)][msg.sender], "not authorized");
 
-        require(sentAmounts[4] <= newLoanAmount, "invalid withdrawal");
-        require(newLoanAmount != 0 && sentAmounts[1] >= newLoanAmount, "loanTokenSent insufficient");
+        require(sentAmounts[6] <= sentAmounts[1], "invalid withdrawal");
+        require(sentAmounts[1] != 0 && sentAmounts[3] >= sentAmounts[1], "loanTokenSent insufficient");
 
         // update order
         LoanOrder storage loanOrder = orders[loanOrderHash];
         require(loanOrder.maxDurationUnixTimestampSec != 0 ||
-            sentAmounts[0] != 0, // interestInitialAmount
+            sentAmounts[2] != 0, // interestInitialAmount
             "invalid interest");
 
-        loanOrder.loanTokenAmount = loanOrder.loanTokenAmount.add(newLoanAmount);
-        loanOrder.interestAmount = loanOrder.loanTokenAmount.mul(newInterestRate).div(365).div(10**20);
+        loanOrder.loanTokenAmount = loanOrder.loanTokenAmount.add(sentAmounts[1]);
+
+        loanOrder.interestAmount = loanOrder.loanTokenAmount
+            .mul(sentAmounts[0]);
+        loanOrder.interestAmount = loanOrder.interestAmount
+            .div(365 * 10**20);
 
         // initialize loan
         LoanPosition storage loanPosition = loanPositions[
             _initializeLoan(
                 loanOrder,
-                trader,
-                collateralTokenAddress,
-                tradeTokenAddress,
-                newLoanAmount
+                sentAddresses[0], // trader
+                sentAddresses[1], // collateralTokenAddress
+                sentAddresses[2], // tradeTokenAddress,
+                sentAmounts[1]    // newLoanAmount
             )
         ];
 
@@ -84,43 +91,47 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
         // get required collateral
         uint256 collateralAmountRequired = _getRequiredCollateral(
             loanOrder.loanTokenAddress,
-            collateralTokenAddress,
+            sentAddresses[1], // collateralTokenAddress
             oracle,
-            sentAmounts[4],  // withdrawalAmount
+            sentAmounts[6],  // withdrawalAmount
             loanOrder.initialMarginAmount
         );
         require(collateralAmountRequired != 0, "collateral is 0");
         if (loanOrder.loanTokenAddress == loanPosition.positionTokenAddressFilled) { // withdrawOnOpen == true
+            uint256 collateralInitialPremium = collateralAmountRequired
+                .mul(10**20)
+                .div(loanOrder.initialMarginAmount);
+
+            if (sentAmounts[7] != 0) { // marginPremiumAmount
+                collateralInitialPremium = collateralInitialPremium
+                    .mul(sentAmounts[7])
+                    .div(10**20)
+                    .add(collateralInitialPremium);
+            }
+
             collateralAmountRequired = collateralAmountRequired
-                .add(
-                    collateralAmountRequired
-                        .mul(10**20)
-                        .div(loanOrder.initialMarginAmount)
-                    );
+                .add(collateralInitialPremium);
         }
 
         // get required interest
         uint256 interestAmountRequired = _initializeInterest(
             loanOrder,
             loanPosition,
-            newLoanAmount,
-            sentAmounts[0] // interestInitialAmount
+            sentAmounts[1], // newLoanAmount,
+            sentAmounts[2]  // interestInitialAmount
         );
 
         // handle transfer and swaps
         _handleTransfersAndSwaps(
             loanOrder,
             loanPosition,
-            newLoanAmount,
             interestAmountRequired,
             collateralAmountRequired,
-            sentAmounts[1], // loanTokenSent,
-            sentAmounts[2], // collateralTokenSent
-            sentAmounts[3], // tradeTokenSent
-            sentAmounts[4]  // withdrawalAmount
+            sentAmounts,
+            loanData
         );
 
-        require (sentAmounts[4] == newLoanAmount ||
+        require (sentAmounts[6] == sentAmounts[1] || // newLoanAmount
             !OracleInterface(oracle).shouldLiquidate(
                 loanOrder,
                 loanPosition
@@ -128,7 +139,7 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
             "unhealthy position"
         );
 
-        return newLoanAmount;
+        return sentAmounts[1]; // newLoanAmount
     }
 
     function getRequiredCollateral(
@@ -199,12 +210,19 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
             // trader has already filled part of the loan order previously and that loan is still active
             require (block.timestamp < loanPosition.loanEndUnixTimestampSec, "loan has ended");
 
-            require(tradeTokenAddress != address(0) || loanOrder.loanTokenAddress == loanPosition.positionTokenAddressFilled, "no withdrawals when in trade");
+            require(collateralTokenAddress == loanPosition.collateralTokenAddressFilled, "wrong collateral");
+
+            if (tradeTokenAddress == address(0)) {
+                require(loanOrder.loanTokenAddress == loanPosition.positionTokenAddressFilled, "no withdrawals when in trade");
+            } else {
+                require(tradeTokenAddress == loanPosition.positionTokenAddressFilled, "wrong trade");
+            }
+
             loanPosition.loanTokenAmountFilled = loanPosition.loanTokenAmountFilled.add(newLoanAmount);
         } else {
             // trader has not previously filled part of this loan or the previous fill is inactive
 
-            positionId = uint(keccak256(abi.encodePacked(
+            positionId = uint256(keccak256(abi.encodePacked(
                 loanOrder.loanOrderHash,
                 orderPositionList[loanOrder.loanOrderHash].length,
                 trader,
@@ -280,27 +298,40 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
             loanOrder.interestTokenAddress
         );
 
+        uint256 maxDuration = loanOrder.maxDurationUnixTimestampSec;
+
+        uint256 previousDepositRemaining;
+        if (maxDuration == 0 && loanPosition.loanEndUnixTimestampSec != 0) {
+            previousDepositRemaining = loanPosition.loanEndUnixTimestampSec
+                .sub(block.timestamp) // block.timestamp < loanEndUnixTimestampSec was confirmed earlier
+                .mul(traderInterest.interestOwedPerDay)
+                .div(86400);
+        }
+
         uint256 owedPerDay = SafeMath.div(
             SafeMath.mul(newLoanAmount, loanOrder.interestAmount),
             loanOrder.loanTokenAmount
         );
         oracleInterest.interestOwedPerDay = oracleInterest.interestOwedPerDay.add(owedPerDay);
-        traderInterest.interestOwedPerDay = traderInterest.interestOwedPerDay.add(owedPerDay);
 
-        uint256 maxDuration = loanOrder.maxDurationUnixTimestampSec;
+        if (traderInterest.interestUpdatedDate != 0 && traderInterest.interestOwedPerDay != 0) {
+            traderInterest.interestPaid = block.timestamp
+                .sub(traderInterest.interestUpdatedDate)
+                .mul(traderInterest.interestOwedPerDay)
+                .div(86400)
+                .add(traderInterest.interestPaid);
+        }
+        traderInterest.interestOwedPerDay = traderInterest.interestOwedPerDay.add(owedPerDay);
 
         if (maxDuration == 0) {
             // indefinite-term loan
 
             // interestInitialAmount != 0 was confirmed earlier
             loanPosition.loanEndUnixTimestampSec = interestInitialAmount
+                .add(previousDepositRemaining)
                 .mul(86400)
                 .div(traderInterest.interestOwedPerDay)
-                .add(
-                    loanPosition.loanEndUnixTimestampSec != 0 ?
-                        loanPosition.loanEndUnixTimestampSec :  // exiting loan -> block.timestamp < loanEndUnixTimestampSec was confirmed earlier
-                        block.timestamp                         // new loan
-                );
+                .add(block.timestamp);
 
             // update maxDuration
             maxDuration = loanPosition.loanEndUnixTimestampSec
@@ -321,14 +352,6 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
                 .sub(block.timestamp)
                 .mul(owedPerDay)
                 .div(86400);
-        }
-
-        if (traderInterest.interestUpdatedDate != 0 && traderInterest.interestOwedPerDay != 0) {
-            traderInterest.interestPaid = block.timestamp
-                .sub(traderInterest.interestUpdatedDate)
-                .mul(traderInterest.interestOwedPerDay)
-                .div(86400)
-                .add(traderInterest.interestPaid);
         }
 
         traderInterest.interestDepositTotal = traderInterest.interestDepositTotal.add(interestAmountRequired);
@@ -372,22 +395,22 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
     function _handleTransfersAndSwaps(
         LoanOrder memory loanOrder,
         LoanPosition memory loanPosition,
-        uint256 newLoanAmount,
         uint256 interestAmountRequired,
         uint256 collateralAmountRequired,
-        uint256 loanTokenUsable,
-        uint256 collateralTokenUsable,
-        uint256 tradeTokenUsable,
-        uint256 withdrawalAmount)
+        uint256[8] memory sentAmounts,
+        bytes memory /* loanData */)
         internal
     {
-        if (tradeTokenUsable != 0) {
+        uint256 loanTokenUsable = sentAmounts[3];
+        uint256 collateralTokenUsable = sentAmounts[4];
+
+        if (sentAmounts[5] != 0) { // tradeTokenUsable
             if (loanPosition.collateralTokenAddressFilled == loanPosition.positionTokenAddressFilled) {
                 collateralTokenUsable = collateralTokenUsable
-                    .add(tradeTokenUsable);
+                    .add(sentAmounts[5]); // tradeTokenUsable
             } else if (loanOrder.loanTokenAddress == loanPosition.positionTokenAddressFilled) {
                 loanTokenUsable = loanTokenUsable
-                    .add(tradeTokenUsable);
+                    .add(sentAmounts[5]); // tradeTokenUsable
             }
         }
 
@@ -403,7 +426,7 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
         // withdraw loan token if needed
         if (loanOrder.loanTokenAddress == loanPosition.positionTokenAddressFilled) { // withdrawOnOpen == true
             loanTokenUsable = loanTokenUsable
-                .sub(withdrawalAmount);
+                .sub(sentAmounts[6]); // withdrawalAmount
         }
 
         address oracle = oracleAddresses[loanOrder.oracleAddress];
@@ -444,16 +467,16 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
 
         if (loanOrder.loanTokenAddress != loanPosition.positionTokenAddressFilled) { // withdrawOnOpen == false
 
-            require(tradeTokenUsable != 0 ||
+            require(sentAmounts[5] != 0 || // tradeTokenUsable
                 (collateralTokenUsable != 0 && loanPosition.collateralTokenAddressFilled == loanPosition.positionTokenAddressFilled) ||
-                loanTokenUsable >= newLoanAmount,
+                loanTokenUsable >= sentAmounts[1], // newLoanAmount
                 "can't fill position");
 
             if (loanPosition.collateralTokenAddressFilled == loanOrder.loanTokenAddress) {
-                if (loanTokenUsable > newLoanAmount) {
+                if (loanTokenUsable > sentAmounts[1]) { // newLoanAmount
                     collateralTokenUsable = collateralTokenUsable
-                        .add(loanTokenUsable - newLoanAmount);
-                    loanTokenUsable = newLoanAmount;
+                        .add(loanTokenUsable - sentAmounts[1]); // newLoanAmount
+                    loanTokenUsable = sentAmounts[1]; // newLoanAmount
                 }
             }
 
@@ -479,9 +502,9 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
                     .sub(sourceTokenAmountUsed);
             }
 
-            if (tradeTokenUsable != 0) {
+            if (sentAmounts[5] != 0) { // tradeTokenUsable
                 destTokenAmountReceived = destTokenAmountReceived
-                    .add(tradeTokenUsable);
+                    .add(sentAmounts[5]); // tradeTokenUsable
             }
 
             uint256 newPositionTokenAmount;
@@ -514,7 +537,7 @@ contract OrderTaking_takeOrderFromiToken is BZxStorage, BZxProxiable {
                 "collateral insufficient"
             );
         }
- 
+
         if (loanTokenUsable != 0) {
             if (loanOrder.loanTokenAddress == loanPosition.positionTokenAddressFilled) {
                 // since withdrawOnOpen == true, we pay back some of the borrowed token with loan token excess

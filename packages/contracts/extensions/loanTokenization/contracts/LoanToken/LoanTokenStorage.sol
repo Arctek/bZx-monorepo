@@ -29,6 +29,7 @@ contract LoanTokenStorage is LoanTokenization {
         uint256 amount;
     }
 
+    // topic: 0x86e15dd78cd784ab7788bcf5b96b9395e86030e048e5faedcfe752c700f6157e
     event Borrow(
         address indexed borrower,
         uint256 borrowAmount,
@@ -38,6 +39,16 @@ contract LoanTokenStorage is LoanTokenization {
         bool withdrawOnOpen
     );
 
+    // topic: 0x85dfc0033a3e5b3b9b3151bd779c1f9b855d66b83ff5bb79283b68d82e8e5b73
+    event Repay(
+        bytes32 indexed loanOrderHash,
+        address indexed borrower,
+        address closer,
+        uint256 amount,
+        bool isLiquidation
+    );
+
+    // topic: 0x68e1caf97c4c29c1ac46024e9590f80b7a1f690d393703879cf66eea4e1e8421
     event Claim(
         address indexed claimant,
         uint256 tokenAmount,
@@ -51,7 +62,10 @@ contract LoanTokenStorage is LoanTokenization {
     address public tokenizedRegistry;
 
     uint256 public baseRate = 1000000000000000000; // 1.0%
-    uint256 public rateMultiplier = 22000000000000000000; // 22%
+    uint256 public rateMultiplier = 18750000000000000000; // 18.75%
+
+    // slot addition (non-sequential): lowUtilBaseRate = 8000000000000000000; // 8.0%
+    // slot addition (non-sequential): lowUtilRateMultiplier = 4750000000000000000; // 4.75%
 
     // "fee percentage retained by the oracle" = SafeMath.sub(10**20, spreadMultiplier);
     uint256 public spreadMultiplier;
