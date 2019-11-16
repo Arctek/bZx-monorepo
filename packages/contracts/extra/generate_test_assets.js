@@ -46,7 +46,7 @@ function proceed() {
   };
   var replacements = {
     LoanTokenLogic: "LoanTokenLogicV2",
-    PositionTokenLogic: "PositionTokenLogicV2"
+    //PositionTokenLogic: "PositionTokenLogicV2"
   };
 
   var loanTokenization = new Array(

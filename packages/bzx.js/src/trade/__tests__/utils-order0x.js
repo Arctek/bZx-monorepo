@@ -1,4 +1,4 @@
-import OrderUtils from "@0xproject/order-utils";
+import OrderUtils from "@0x/order-utils";
 import { pathOr } from "ramda";
 import * as signatureUtils from "../../signature/utils";
 import * as constants from "../../core/constants";

@@ -12,6 +12,11 @@ fs.readdirAsync("../src/contracts/mainnet")
                 return;
             }
 
+            //Only need these 3
+            /*if (file.indexOf("BZx.json") == -1 && file.indexOf("OracleRegistry.json") == -1 && file.indexOf("OracleInterface.json") == -1 && file.indexOf("BZxVault.json") == -1 && file.indexOf("BZRxToken.json") == -1 && file.indexOf("BZRxTokenConvert.json") == -1) {
+                return;
+            }*/
+
             let contract = require("../src/contracts/mainnet/" + file);
 //console.log(contract)
             contract["addresses"] = {
@@ -34,6 +39,10 @@ fs.readdirAsync("../src/contracts/mainnet")
                             if (file.indexOf("json") == -1) {
                                 return;
                             }
+
+                            /*if (file.indexOf("BZx.json") == -1 && file.indexOf("OracleRegistry.json") == -1 && file.indexOf("OracleInterface.json") == -1 && file.indexOf("BZxVault.json") == -1 && file.indexOf("BZRxToken.json") == -1 && file.indexOf("BZRxTokenConvert.json") == -1) {
+                                return;
+                            }*/
 
                             let contract = require("../src/contracts/" + network[0] + "/" + file);
 
@@ -67,6 +76,10 @@ fs.readdirAsync("../src/contracts/mainnet")
                         return;
                     }
 
+                    /*if (file.indexOf("BZx.json") == -1 && file.indexOf("OracleRegistry.json") == -1 && file.indexOf("OracleInterface.json") == -1 && file.indexOf("BZxVault.json") == -1 && file.indexOf("BZRxToken.json") == -1 && file.indexOf("BZRxTokenConvert.json") == -1) {
+                        return;
+                    }*/
+
                     let contract = require("../../contracts/test_network/deployed/" + file);
 
                     if (!(file in contracts)) {
@@ -88,6 +101,43 @@ fs.readdirAsync("../src/contracts/mainnet")
     )
     .then(() => {
         Object.keys(contracts).forEach(file => {
-            fs.writeFileSync("../src/contracts/merged/" + file, JSON.stringify(contracts[file]), 'utf8');
+
+            if (file == "TokenizedRegistry.json") {
+                // hard code for now
+                contracts[file]["addresses"] = {
+                    ...contracts[file]["addresses"],
+                    1: "0xd8dc30d298ccf40042991cb4b96a540d8affe73a",
+                    3: "0xaa5c713387972841995553c9690459596336800b",
+                    42: "0x730df5c1e0a4b6ba7a982a585c1ec55187fbb3ca"
+                };
+            }
+
+            let data = contracts[file];
+            let newData = [];
+
+            for (let i = 0, len = data.abi.length; i < len; i++) {
+                if (data.abi[i].type == "event") {
+                    continue;
+                }
+
+                newData.push(data.abi[i]);
+            }
+
+            newData = { ...data, abi: newData };
+
+            // Only need addresses here
+            if (file.indexOf("BZxVault.json") > -1 || file.indexOf("BZRxToken.json") > -1 || file.indexOf("BZRxTokenConvert.json") > -1) {
+                newData.abi = [];
+            }
+
+            let jsonOutput = JSON.stringify(newData);
+
+            /*jsonOutput = jsonOutput.replace(/\"payable\"\:false\,/g, "");
+            jsonOutput = jsonOutput.replace(/\"stateMutability\"\:view\,/g, "");
+            jsonOutput = jsonOutput.replace(/\"stateMutability\"\:pure\,/g, "");
+            jsonOutput = jsonOutput.replace(/\"stateMutability\"\:nonpayable\,/g, "");
+            //jsonOutput = jsonOutput.replace(/\:true/g, ":!0");*/
+
+            fs.writeFileSync("../src/contracts/merged/" + file, jsonOutput, 'utf8');
         })
     });

@@ -1,4 +1,4 @@
-import { BigNumber } from "@0xproject/utils";
+import { BigNumber } from "@0x/utils";
 import { pathOr } from "ramda";
 import { local as Contracts } from "../../contracts";
 import * as constants from "../../core/constants";

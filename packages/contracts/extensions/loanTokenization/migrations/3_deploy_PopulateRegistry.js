@@ -25,6 +25,8 @@ module.exports = function(deployer, network, accounts) {
     let names = [];
     let symbols = [];
 
+    let tokenizedRegistry = await TokenizedRegistry.deployed();
+
     const file = await fs.readFile("TokenizedLoans_"+network+".log");
     let lines = file.toString().split("\n");
     for(i in lines) {
@@ -33,31 +35,44 @@ module.exports = function(deployer, network, accounts) {
       if (items.length < 5) {
         continue;
       }
+
+      let type;
       
       if (items[0] == "LoanToken") {
         types.push("1");
+        type = "1";
       }
       else if (items[0] == "PositionToken") {
         types.push("2");
+        type = "2";
       }
       else {
         types.push("0");
+        type = "0";
       }
 
       tokens.push(items[1]);
       assets.push(items[2]);
       names.push(items[3]);
       symbols.push(items[4]);
+
+      // do sequentially instead
+      try {
+        await tokenizedRegistry.addTokens(
+          [items[1]],
+          [items[2]],
+          [items[3]],
+          [items[4]],
+          [type]
+        );
+      } catch (err) {
+        console.log(items[0] + ": " + items[3] + " error");
+        console.log(err);
+      }
     }
 
-    let tokenizedRegistry = await TokenizedRegistry.deployed();
-    await tokenizedRegistry.addTokens(
-      tokens,
-      assets,
-      names,
-      symbols,
-      types
-    );
+    
+    
 
     console.log(`   > [${parseInt(path.basename(__filename))}] TokenizedLoans deploy: #done`);
   });

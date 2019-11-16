@@ -1,4 +1,4 @@
-import { BigNumber } from "@0xproject/utils";
+import { BigNumber } from "@0x/utils";
 import { BZxJS } from "../../core";
 import * as utils from "../../core/utils";
 import bZxJS from "./setup";

@@ -1,6 +1,5 @@
 /node_modules
 /**/node_modules
-/**/dist/
 /**/build/
 /**/ignore/
 /**/test_network/**
@@ -22,3 +21,7 @@ package-lock.json
 /packages/contracts/scripts/doxity/pages/index.md
 /packages/contracts/scripts/doxity/config.toml
 /docs/
+packages/bzx.js/webpack
+packages/contracts/cd
+packages/contracts/extra/0x_ganache_snapshot-4.3.0.zip
+yarn.lock
